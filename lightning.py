@@ -6,6 +6,7 @@ import typing as tp
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 
 from data_types import MTDataSample
+from model.diffusion import GaussianDiffusion
 from model.mtformer import MTFormer
 
 
@@ -13,7 +14,7 @@ class TrainingEngine(pl.LightningModule):
     def __init__(
         self,
         config: dict,
-        model: MTFormer,
+        model: GaussianDiffusion,
         optimizer: torch.optim.Optimizer,
         scheduler: torch.optim.lr_scheduler.StepLR,
         criterion: nn.Module,
@@ -27,33 +28,14 @@ class TrainingEngine(pl.LightningModule):
 
         self.save_hyperparameters("config")
 
-    def _compute_loss(self, y_pred: torch.Tensor, y_true: torch.Tensor) -> torch.Tensor:
-        return self.criterion(y_pred, y_true)
-
     def training_step(self, batch: MTDataSample, batch_idx):
-        predicted_resistivity = self.model(
-            base_resistivity=batch.resistivity_noisy,
-            base_apparent_resistivity=batch.apparent_resistivity_noisy,
-            base_impedance_phase=batch.impedance_phase_noisy,
-            target_apparent_resistivity=batch.apparent_resistivity,
-            target_impedance_phase=batch.impedance_phase,
-            periods=batch.periods,
-        )
-        loss = self._compute_loss(predicted_resistivity, batch.resistivity)
+        loss = self.model(**batch.__dict__)
         self.log("train/loss", loss.cpu().item())
         self.lr_schedulers().step()
         return loss
 
     def validation_step(self, batch: MTDataSample, batch_idx):
-        predicted_resistivity = self.model(
-            base_resistivity=batch.resistivity_noisy,
-            base_apparent_resistivity=batch.apparent_resistivity_noisy,
-            base_impedance_phase=batch.impedance_phase_noisy,
-            target_apparent_resistivity=batch.apparent_resistivity,
-            target_impedance_phase=batch.impedance_phase,
-            periods=batch.periods,
-        )
-        loss = self._compute_loss(predicted_resistivity, batch.resistivity)
+        loss = self.model(**batch.__dict__)
         self.log("valid/loss", loss.cpu().item())
         return loss
 

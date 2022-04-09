@@ -13,6 +13,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 
 from lightning import TrainingEngine
+from model.diffusion import GaussianDiffusion, generate_cosine_schedule, generate_linear_schedule
 from model.mtformer import MTFormer
 
 
@@ -48,7 +49,9 @@ def train(config: dict):
     seed_everything(config.get("seed", 1024))
 
     # Initialize model
-    model = MTFormer(**config["model_params"])
+    model = GaussianDiffusion(
+        model=MTFormer(**config["model_params"]), betas=generate_linear_schedule(100, 1.e-4, 0.02)
+    )
 
     # Initialize criterion
     criterion = torch.nn.MSELoss()

@@ -40,15 +40,10 @@ class RandomLayerDataset(Dataset):
         self._epoch_size = epoch_size
 
     def sample_periods(self) -> np.ndarray:
-        return np.random.uniform(
-            *self._period_range, size=(random.randint(*self._period_count_range),)
+        return np.e ** np.random.uniform(
+            *[np.log(i) for i in self._period_range],
+            size=(random.randint(*self._period_count_range),)
         )
-
-    @staticmethod
-    def apply_noise(mgrid: ResistivityMicrogrid, signal_weight: float) -> ResistivityMicrogrid:
-        noise = np.random.uniform(0, np.max(mgrid.resistivity), mgrid.resistivity.shape)
-        mgrid.resistivity = np.clip(mgrid.resistivity * signal_weight + noise, 0, np.inf)
-        return mgrid
 
     def __getitem__(self, index: int) -> ResistivityMicrogrid:
         random_mgrid = self._layer_model.to_microgrid(self._size, self._pixel_size)
@@ -62,54 +57,28 @@ class RandomLayerDataset(Dataset):
         data: tp.List[ResistivityMicrogrid],
     ) -> MTDataSample:
         periods = self.sample_periods()
-        signal_weight = random.random()
 
-        resistivity = []
-        resistivity_noisy = []
-        app_res, im_ph = [], []
-        app_res_noisy, imp_ph_noisy = [], []
-        periods_list = []
-        for mgrid in data:
+        print(data[0].resistivity.shape)
+
+        app_res = torch.empty((self._batch_size, len(periods), self._size), dtype=torch.float32)
+        imp_phs = torch.empty((self._batch_size, len(periods), self._size), dtype=torch.float32)
+        resistivity = torch.empty(
+            (self._batch_size, data[0].resistivity.shape[1], self._size), dtype=torch.float32
+        )
+        layer_powers = torch.ones_like(resistivity) * self._pixel_size
+
+        for i, mgrid in enumerate(data):
             mgrid.compute_direct_task(periods)
-            app_res.append(torch.from_numpy(mgrid.apparent_resistivity).float())
-            im_ph.append(torch.from_numpy(mgrid.impedance_phase).float())
-            resistivity.append(torch.from_numpy(mgrid.resistivity).float())
+            resistivity[i, :] = torch.Tensor(mgrid.resistivity).T
+            app_res[i, :] = torch.Tensor(mgrid.apparent_resistivity).T
+            imp_phs[i, :] = torch.Tensor(mgrid.impedance_phase).T
 
-            mgrid = self.apply_noise(mgrid, signal_weight)
-            mgrid.compute_direct_task(periods)
-            app_res_noisy.append(torch.from_numpy(mgrid.apparent_resistivity).float())
-            imp_ph_noisy.append(torch.from_numpy(mgrid.impedance_phase).float())
-            resistivity_noisy.append(torch.from_numpy(mgrid.resistivity).float())
-
-            periods_list.append(torch.from_numpy(periods))
+        periods = torch.ones((self._batch_size, len(periods))) * torch.Tensor(periods)
 
         return MTDataSample(
-            resistivity=torch.stack(resistivity).unsqueeze(1).transpose(-1, -2),
-            resistivity_noisy=torch.stack(resistivity_noisy).unsqueeze(1).transpose(-1, -2),
-            apparent_resistivity=torch.stack(app_res).unsqueeze(1).transpose(-1, -2),
-            apparent_resistivity_noisy=torch.stack(app_res_noisy).unsqueeze(1).transpose(-1, -2),
-            impedance_phase=torch.stack(im_ph).unsqueeze(1).transpose(-1, -2),
-            impedance_phase_noisy=torch.stack(imp_ph_noisy).unsqueeze(1).transpose(-1, -2),
-            periods=torch.stack(periods_list).float(),
+            resistivity=resistivity,
+            apparent_resistivity=app_res,
+            impedance_phase=imp_phs,
+            periods=periods,
+            layer_powers=layer_powers,
         )
-
-
-if __name__ == "__main__":
-    from torch.utils.data import DataLoader
-
-    dataset = RandomLayerDataset(
-        [1000, 2000, 3000],
-        [800, 1800, 2500],
-        [1000, 1000, 1000],
-        [0, 0, 0],
-        64,
-        100,
-        [0.01 * (2 ** i) for i in range(13)],
-    )
-    import tqdm
-
-    dataloader = DataLoader(dataset, batch_size=32, collate_fn=dataset.collate_function)
-    for i in tqdm.tqdm(dataloader):
-        pass
-
-    print(next(iter(dataloader)).apparent_resistivity.shape)

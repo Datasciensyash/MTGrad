@@ -6,22 +6,20 @@ from pymt.direct_task import direct_task_2d
 
 import typing as tp
 
+from model.transform import ResistivityTransform
+
 
 @dataclass
 class MTDataSample:
     resistivity: torch.Tensor
-    resistivity_noisy: torch.Tensor
     apparent_resistivity: torch.Tensor
-    apparent_resistivity_noisy: torch.Tensor
     impedance_phase: torch.Tensor
-    impedance_phase_noisy: torch.Tensor
     periods: torch.Tensor
+    layer_powers: torch.Tensor
 
     def __post_init__(self):
-        if len(self.resistivity.shape) != 4 and self.resistivity.shape[1] != 1:
-            raise ValueError(
-                "MTDataSample must be used only for 2D MT Model with shape (B, 1, H, W)"
-            )
+        if len(self.resistivity.shape) != 3:
+            raise ValueError("MTDataSample must be used only for 2D MT Model with shape (B, H, W)")
 
 
 @dataclass

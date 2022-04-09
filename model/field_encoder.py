@@ -43,11 +43,9 @@ class AbsolutePositionalEncoding(nn.Module):
     def forward(self, input_tensor: torch.Tensor, random_slice: bool = False) -> torch.Tensor:
         tensor_length = input_tensor.shape[2]  # (B, H, W, C) -> W
         start_index = 0 if not random_slice else random.randint(0, self._max_length - tensor_length)
-        encoding = (
-            self._alpha * self._positional_encoding[start_index : start_index + tensor_length]
-        )
+        encoding = self._positional_encoding[start_index : start_index + tensor_length]
         # (B, H, W, C) + (W, C) -> (B, H, W, C)
-        return encoding + input_tensor
+        return self._alpha * encoding + input_tensor
 
 
 class PeriodEncoder(nn.Module):
@@ -105,6 +103,7 @@ class ResistivityEncoder(nn.Module):
         hidden_channels: int = 128,
         pos_enc_max_length: int = 1024,
         pos_enc_requires_grad: bool = False,
+        max_time_steps: int = 100,
     ):
         super(ResistivityEncoder, self).__init__()
 
@@ -114,15 +113,21 @@ class ResistivityEncoder(nn.Module):
             requires_grad=pos_enc_requires_grad,
         )
 
+        self._time_encoding = nn.Embedding(max_time_steps, hidden_channels)
+
         self._res_projection = FeedForwardEncoder(1, hidden_channels)
 
-    def forward(self, resistivity: torch.Tensor) -> torch.Tensor:
+    def forward(self, resistivity: torch.Tensor, time: torch.Tensor) -> torch.Tensor:
         # Encode resistivity
         resistivity = torch.einsum("b c h w -> b h w c", resistivity)
         resistivity = self._res_projection(resistivity)
 
         # Add positional encoding
         resistivity = self._positional_encoding(resistivity)
+
+        # Add time encoding
+        time_encoded = self._time_encoding(time)
+        resistivity = torch.einsum("b w h c, b c -> b w h c", resistivity, time_encoded)
 
         return resistivity
 
