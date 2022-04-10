@@ -76,22 +76,27 @@ class GaussianDiffusion(nn.Module):
     @torch.no_grad()
     def sample(
         self,
+        resistivity: torch.Tensor,
         apparent_resistivity: torch.Tensor,
         impedance_phase: torch.Tensor,
         periods: torch.Tensor,
         layer_powers: torch.Tensor,
-        history: bool = False
+        history: bool = False,
+        n: int = 40
     ):
         batch_size, _, width = apparent_resistivity.shape
         device = apparent_resistivity.device
+        resistivity = self._rt.forward_transform(resistivity)
+        t = torch.Tensor([self.num_timesteps - n], device=device).long()
         x = torch.randn(1, layer_powers.shape[1], width, device=device)
+        x = self.perturb_x(resistivity, t, x)
 
         history_x = [] if history else None
 
-        for t in range(self.num_timesteps - 1, -1, -1):
+        for t in range(self.num_timesteps - n - 1, -1, -1):
             t_tensor = torch.Tensor([t], device=device).long()
             eps = self.model(
-                resistivity=self._rt.backward_transform(x),
+                resistivity=x,
                 time=t_tensor,
                 apparent_resistivity=apparent_resistivity,
                 impedance_phase=impedance_phase,
@@ -128,7 +133,7 @@ class GaussianDiffusion(nn.Module):
         noise = torch.randn_like(resistivity)
         resistivity = self._rt.forward_transform(resistivity)
         noisy_resistivity = self.perturb_x(resistivity, t, noise)
-        noisy_resistivity = self._rt.backward_transform(noisy_resistivity)
+        # noisy_resistivity = self._rt.backward_transform(noisy_resistivity)
 
         estimated_noise = self.model(
             resistivity=noisy_resistivity,
@@ -139,7 +144,7 @@ class GaussianDiffusion(nn.Module):
             layer_powers=layer_powers
         )
 
-        return (estimated_noise - noise).square().mean()
+        return (estimated_noise - resistivity).square().mean()
 
     def forward(
         self,

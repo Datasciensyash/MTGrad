@@ -49,7 +49,7 @@ class AbsolutePositionalEncoding(nn.Module):
 
 
 class PeriodEncoder(nn.Module):
-    def __init__(self, out_channels: int, log: bool = True):
+    def __init__(self, out_channels: int, log: bool = False):
         super(PeriodEncoder, self).__init__()
         self._log = log
         self._encoder = nn.Sequential(nn.Linear(1, out_channels), nn.LeakyReLU(0.2))
@@ -85,14 +85,17 @@ class FieldEncoder(nn.Module):
 
     def forward(self, field: torch.Tensor, periods: torch.Tensor) -> torch.Tensor:
         # Encode field
-        field = torch.einsum("b c h w -> b h w c", field)
+        # field = field.permute(0, 2, 3, 1)
+        field = torch.einsum("b c p w -> b p w c", field)
         field = self._field_projection(field)
+
+        print(field.shape)
 
         # Add positional encoding
         field = self._positional_encoding(field)
 
         # Add period encoding
-        field = torch.einsum("b h w c, b h c -> b h w c", field, self._period_encoding(periods))
+        field = torch.einsum("b p w c, b p c -> b p w c", field, self._period_encoding(periods))
 
         return field
 
