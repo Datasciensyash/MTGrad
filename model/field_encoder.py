@@ -8,7 +8,6 @@ from model.modules import FeedForwardEncoder
 
 
 class AbsolutePositionalEncoding(nn.Module):
-    # TODO: Maybe we should use Relative embeddings?
     def __init__(self, in_channels: int, max_length: int = 1024, requires_grad: bool = False):
         super(AbsolutePositionalEncoding, self).__init__()
         self._in_channels = in_channels
@@ -78,61 +77,57 @@ class FieldEncoder(nn.Module):
             max_length=pos_enc_max_length,
             requires_grad=pos_enc_requires_grad,
         )
+        self._period_encoding_log = period_enc_log
 
-        self._period_encoding = PeriodEncoder(hidden_channels, log=period_enc_log)
-
-        self._field_projection = FeedForwardEncoder(1, hidden_channels)
+        self._field_projection = FeedForwardEncoder(2, hidden_channels)
 
     def forward(self, field: torch.Tensor, periods: torch.Tensor) -> torch.Tensor:
-        # Encode field
-        # field = field.permute(0, 2, 3, 1)
-        field = torch.einsum("b c p w -> b p w c", field)
-        field = self._field_projection(field)
 
-        print(field.shape)
+        # Add periods data to field
+        field = field.squeeze(1) if field.ndim == 4 else field
+        periods = periods.unsqueeze(2).repeat(1, 1, field.shape[-1])
+        periods = torch.log(periods) if self._period_encoding_log else periods
+        field = torch.stack([field, periods], dim=3)
+
+        # Encode field
+        field = self._field_projection(field)
 
         # Add positional encoding
         field = self._positional_encoding(field)
 
-        # Add period encoding
-        field = torch.einsum("b p w c, b p c -> b p w c", field, self._period_encoding(periods))
-
         return field
 
 
-class ResistivityEncoder(nn.Module):
+class DepthEncoder(nn.Module):
     def __init__(
         self,
-        hidden_channels: int = 128,
+        out_channels: int = 64,
+        hidden_channels: int = 512,
         pos_enc_max_length: int = 1024,
         pos_enc_requires_grad: bool = False,
-        max_time_steps: int = 100,
     ):
-        super(ResistivityEncoder, self).__init__()
+        super(DepthEncoder, self).__init__()
 
         self._positional_encoding = AbsolutePositionalEncoding(
-            hidden_channels,
+            out_channels,
             max_length=pos_enc_max_length,
             requires_grad=pos_enc_requires_grad,
         )
 
-        self._time_encoding = nn.Embedding(max_time_steps, hidden_channels)
+        self._depth_projection = FeedForwardEncoder(1, out_channels, hidden_channels)
 
-        self._res_projection = FeedForwardEncoder(1, hidden_channels)
+    def forward(self, layer_powers: torch.Tensor) -> torch.Tensor:
 
-    def forward(self, resistivity: torch.Tensor, time: torch.Tensor) -> torch.Tensor:
-        # Encode resistivity
-        resistivity = torch.einsum("b c h w -> b h w c", resistivity)
-        resistivity = self._res_projection(resistivity)
+        # Accumulative summarize all powers to get depth
+        layer_powers = torch.cumsum(layer_powers, dim=1).unsqueeze(-1)
+
+        # Encode depth
+        layer_powers = self._depth_projection(layer_powers)
 
         # Add positional encoding
-        resistivity = self._positional_encoding(resistivity)
+        layer_powers = self._positional_encoding(layer_powers)
 
-        # Add time encoding
-        time_encoded = self._time_encoding(time)
-        resistivity = torch.einsum("b w h c, b c -> b w h c", resistivity, time_encoded)
-
-        return resistivity
+        return layer_powers
 
 
 if __name__ == "__main__":
