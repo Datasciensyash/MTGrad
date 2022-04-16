@@ -1,8 +1,8 @@
+import typing as tp
+
 import pytorch_lightning as pl
 import torch.nn as nn
 import torch.optim
-import typing as tp
-
 from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
 from torch.nn import functional
 
@@ -51,7 +51,7 @@ class TrainingEngine(pl.LightningModule):
         resistivity = self.model.normalize_resistivity(batch.resistivity)
         loss = functional.mse_loss(resistivity, resistivity_predicted)
         self.log("valid/loss", loss.cpu().item())
-        return loss
+        return resistivity, resistivity_predicted
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         pass

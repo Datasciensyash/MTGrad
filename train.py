@@ -1,17 +1,17 @@
 import argparse
 import time
-import torch
-from pytorch_lightning import seed_everything, Trainer
-from torch.utils.data import DataLoader
 from pathlib import Path
+
+import torch
 import torch.optim as optimizers
 import torch.optim.lr_scheduler as lr_schedulers
 import yaml
-
-from data.dataset import RandomLayerDataset
+from pytorch_lightning import Trainer, seed_everything
 from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
+from torch.utils.data import DataLoader
 
+from data.dataset import RandomLayerDataset
 from lightning import TrainingEngine
 from model.mtformer import MTFormer
 
@@ -29,7 +29,9 @@ def parse_args():
 
 def prepare_experiment(exp_path: Path, exp_name: str):
     exp_path.mkdir(exist_ok=True)
-    experiment_path = exp_path / exp_name / str(time.ctime()).replace(" ", "_").replace(":", "_")
+    experiment_path = (
+        exp_path / exp_name / str(time.ctime()).replace(" ", "_").replace(":", "_")
+    )
     logs_dir = experiment_path / "logs"
     checkpoint_dir = experiment_path / "_checkpoints"
     experiment_path.mkdir(parents=True)
@@ -103,7 +105,9 @@ def train(config: dict):
 
     # Initialize trainer
     trainer = Trainer(
-        logger=logger, callbacks=[checkpoint_callback], **config["trainer_params"]  # , visualize],
+        logger=logger,
+        callbacks=[checkpoint_callback],
+        **config["trainer_params"]  # , visualize],
     )
 
     trainer.fit(module, train_dataloader, valid_dataloader)

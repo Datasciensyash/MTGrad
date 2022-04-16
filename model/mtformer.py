@@ -1,18 +1,19 @@
-import torch
-import torch.nn as nn
 import typing as tp
 
-from model.field_encoder import FieldEncoder, DepthEncoder
-from model.transform import ResistivityTransform, FieldsTransform
+import torch
+import torch.nn as nn
+
+from model.field_encoder import DepthEncoder, FieldEncoder
+from model.transform import FieldsTransform, ResistivityTransform
 
 
 class MTFieldEncoder(nn.Module):
     def __init__(
-            self,
-            hidden_channels: int = 128,
-            pos_enc_max_length: int = 1024,
-            pos_enc_requires_grad: bool = False,
-            period_enc_log: bool = True,
+        self,
+        hidden_channels: int = 128,
+        pos_enc_max_length: int = 1024,
+        pos_enc_requires_grad: bool = False,
+        period_enc_log: bool = True,
     ):
         super(MTFieldEncoder, self).__init__()
 
@@ -25,10 +26,10 @@ class MTFieldEncoder(nn.Module):
         )
 
     def forward(
-            self,
-            apparent_resistivity: torch.Tensor,
-            impedance_phase: torch.Tensor,
-            periods: torch.Tensor,
+        self,
+        apparent_resistivity: torch.Tensor,
+        impedance_phase: torch.Tensor,
+        periods: torch.Tensor,
     ) -> torch.Tensor:
         apparent_resistivity = self._app_res_encoder(apparent_resistivity, periods)
         impedance_phase = self._imp_phs_encoder(impedance_phase, periods)
@@ -37,13 +38,13 @@ class MTFieldEncoder(nn.Module):
 
 class MTFormer(nn.Module):
     def __init__(
-            self,
-            hidden_channels: int,
-            num_decoder_blocks: int,
-            num_attention_heads: int = 8,
-            positional_encoding_requires_grad: bool = True,
-            max_positional_length: int = 1024,
-            quantization: tp.Optional[int] = None,
+        self,
+        hidden_channels: int,
+        num_decoder_blocks: int,
+        num_attention_heads: int = 8,
+        positional_encoding_requires_grad: bool = True,
+        max_positional_length: int = 1024,
+        quantization: tp.Optional[int] = None,
     ):
         super(MTFormer, self).__init__()
 
@@ -76,7 +77,7 @@ class MTFormer(nn.Module):
                 nhead=num_attention_heads,
                 batch_first=True,
             ),
-            num_layers=num_decoder_blocks
+            num_layers=num_decoder_blocks,
         )
 
         self._out_projection = nn.Sequential(
@@ -89,11 +90,11 @@ class MTFormer(nn.Module):
         return self._rt.normalize(resistivity)
 
     def forward(
-            self,
-            apparent_resistivity: torch.Tensor,
-            impedance_phase: torch.Tensor,
-            periods: torch.Tensor,
-            layer_powers: torch.Tensor,
+        self,
+        apparent_resistivity: torch.Tensor,
+        impedance_phase: torch.Tensor,
+        periods: torch.Tensor,
+        layer_powers: torch.Tensor,
     ) -> torch.Tensor:
 
         # 1. Acquire resistivity depth grid
@@ -101,15 +102,23 @@ class MTFormer(nn.Module):
         resistivity_grid_shape = resistivity_grid.shape[:-1]
 
         # 2. Transform fields
-        apparent_resistivity = self._ft.normalize_app_res(apparent_resistivity).unsqueeze(1)
+        apparent_resistivity = self._ft.normalize_app_res(
+            apparent_resistivity
+        ).unsqueeze(1)
         impedance_phase = self._ft.normalize_imp_phs(impedance_phase).unsqueeze(1)
 
         # 2. Encode input fields
-        target_field = self._target_field_encoder(apparent_resistivity, impedance_phase, periods)
+        target_field = self._target_field_encoder(
+            apparent_resistivity, impedance_phase, periods
+        )
 
         # 3. Reshape Fields & Resistivity to 1-d format
-        target_field = target_field.view(target_field.shape[0], -1, target_field.shape[-1])
-        resistivity_grid = resistivity_grid.view(resistivity_grid.shape[0], -1, resistivity_grid.shape[-1])
+        target_field = target_field.view(
+            target_field.shape[0], -1, target_field.shape[-1]
+        )
+        resistivity_grid = resistivity_grid.view(
+            resistivity_grid.shape[0], -1, resistivity_grid.shape[-1]
+        )
 
         # 4. Encode sequence via transformer decoder blocks
         resistivity_grid = self._decoder(resistivity_grid, target_field)

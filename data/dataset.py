@@ -1,10 +1,11 @@
 import random
+import typing as tp
+
 import numpy as np
 import torch
 from pymt.microgrid import ResistivityMicrogrid
-from torch.utils.data import Dataset
 from pymt.modeling import RandomLayerModel
-import typing as tp
+from torch.utils.data import Dataset
 
 from data_types import MTDataSample
 
@@ -40,7 +41,7 @@ class RandomLayerDataset(Dataset):
         self._epoch_size = epoch_size
 
     def sample_periods(self) -> np.ndarray:
-        #return np.clip(np.random.exponential(0.6, size=(random.randint(*self._period_count_range),)), *self._period_range)
+        # return np.clip(np.random.exponential(0.6, size=(random.randint(*self._period_count_range),)), *self._period_range)
         return np.array([2 ** i * 0.001 for i in range(13)])
 
     def __getitem__(self, index: int) -> ResistivityMicrogrid:
@@ -58,10 +59,15 @@ class RandomLayerDataset(Dataset):
 
         print(data[0].resistivity.shape)
 
-        app_res = torch.empty((self._batch_size, len(periods), self._size), dtype=torch.float32)
-        imp_phs = torch.empty((self._batch_size, len(periods), self._size), dtype=torch.float32)
+        app_res = torch.empty(
+            (self._batch_size, len(periods), self._size), dtype=torch.float32
+        )
+        imp_phs = torch.empty(
+            (self._batch_size, len(periods), self._size), dtype=torch.float32
+        )
         resistivity = torch.empty(
-            (self._batch_size, data[0].resistivity.shape[1], self._size), dtype=torch.float32
+            (self._batch_size, data[0].resistivity.shape[1], self._size),
+            dtype=torch.float32,
         )
         layer_powers = torch.ones_like(resistivity) * self._pixel_size
 

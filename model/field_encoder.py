@@ -8,7 +8,9 @@ from model.modules import FeedForwardEncoder
 
 
 class AbsolutePositionalEncoding(nn.Module):
-    def __init__(self, in_channels: int, max_length: int = 128, requires_grad: bool = True):
+    def __init__(
+        self, in_channels: int, max_length: int = 128, requires_grad: bool = True
+    ):
         super(AbsolutePositionalEncoding, self).__init__()
         self._in_channels = in_channels
         self._max_length = max_length
@@ -18,7 +20,9 @@ class AbsolutePositionalEncoding(nn.Module):
         else:
             positional_encoding = self.initialize_sinusoid_encoding_table()
 
-        self._positional_encoding = nn.Parameter(positional_encoding, requires_grad=requires_grad)
+        self._positional_encoding = nn.Parameter(
+            positional_encoding, requires_grad=requires_grad
+        )
         self._alpha = nn.Parameter(torch.Tensor([1.0]), requires_grad=True)
 
         self.register_parameter("_positional_encoding", self._positional_encoding)
@@ -39,9 +43,15 @@ class AbsolutePositionalEncoding(nn.Module):
         nn.init.kaiming_uniform_(positional_encoding, mode="fan_in")
         return positional_encoding
 
-    def forward(self, input_tensor: torch.Tensor, random_slice: bool = False) -> torch.Tensor:
+    def forward(
+        self, input_tensor: torch.Tensor, random_slice: bool = False
+    ) -> torch.Tensor:
         tensor_length = input_tensor.shape[2]  # (B, H, W, C) -> W
-        start_index = 0 if not random_slice else random.randint(0, self._max_length - tensor_length)
+        start_index = (
+            0
+            if not random_slice
+            else random.randint(0, self._max_length - tensor_length)
+        )
         encoding = self._positional_encoding[start_index : start_index + tensor_length]
         # (B, H, W, C) + (W, C) -> (B, H, W, C)
         return self._alpha * encoding + input_tensor
@@ -111,7 +121,7 @@ class DepthEncoder(nn.Module):
         self._positional_encoding = AbsolutePositionalEncoding(
             out_channels,
             max_length=pos_enc_max_length,
-            requires_grad=pos_enc_requires_grad
+            requires_grad=pos_enc_requires_grad,
         )
 
         self._depth_projection = FeedForwardEncoder(1, out_channels, hidden_channels)
