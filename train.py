@@ -11,6 +11,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
 
+from callbacks import VisualizationCallback
 from data.dataset import RandomLayerDataset
 from lightning import TrainingEngine
 from model.mtformer import MTFormer
@@ -106,7 +107,7 @@ def train(config: dict):
     # Initialize trainer
     trainer = Trainer(
         logger=logger,
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback, VisualizationCallback()],
         **config["trainer_params"]  # , visualize],
     )
 

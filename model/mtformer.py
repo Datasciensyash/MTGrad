@@ -89,6 +89,9 @@ class MTFormer(nn.Module):
     def normalize_resistivity(self, resistivity: torch.Tensor) -> torch.Tensor:
         return self._rt.normalize(resistivity)
 
+    def denormalize_resistivity(self, resistivity: torch.Tensor) -> torch.Tensor:
+        return self._rt.denormalize(resistivity)
+
     def forward(
         self,
         apparent_resistivity: torch.Tensor,
