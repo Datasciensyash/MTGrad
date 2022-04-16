@@ -1,8 +1,10 @@
 import torch
 import torch.nn as nn
+import typing as tp
 
 from model.field_encoder import FieldEncoder, DepthEncoder
 from model.transform import ResistivityTransform, FieldsTransform
+
 
 class MTFieldEncoder(nn.Module):
     def __init__(
@@ -39,14 +41,16 @@ class MTFormer(nn.Module):
             hidden_channels: int,
             num_decoder_blocks: int,
             num_attention_heads: int = 8,
-            positional_encoding_requires_grad: bool = False,
+            positional_encoding_requires_grad: bool = True,
             max_positional_length: int = 1024,
-            max_time_steps: int = 100,
+            quantization: tp.Optional[int] = None,
     ):
         super(MTFormer, self).__init__()
 
         self._rt = ResistivityTransform()
         self._ft = FieldsTransform()
+
+        self._out_channels = quantization if quantization is not None else 1
 
         self._base_field_encoder = MTFieldEncoder(
             hidden_channels,
@@ -70,7 +74,7 @@ class MTFormer(nn.Module):
             decoder_layer=nn.TransformerDecoderLayer(
                 d_model=hidden_channels,
                 nhead=num_attention_heads,
-                batch_first=True
+                batch_first=True,
             ),
             num_layers=num_decoder_blocks
         )
@@ -78,7 +82,7 @@ class MTFormer(nn.Module):
         self._out_projection = nn.Sequential(
             nn.Linear(hidden_channels, hidden_channels * 2),
             nn.LeakyReLU(0.2),
-            nn.Linear(hidden_channels * 2, 1),
+            nn.Linear(hidden_channels * 2, self._out_channels),
         )
 
     def normalize_resistivity(self, resistivity: torch.Tensor) -> torch.Tensor:

@@ -8,7 +8,7 @@ from model.modules import FeedForwardEncoder
 
 
 class AbsolutePositionalEncoding(nn.Module):
-    def __init__(self, in_channels: int, max_length: int = 1024, requires_grad: bool = False):
+    def __init__(self, in_channels: int, max_length: int = 128, requires_grad: bool = True):
         super(AbsolutePositionalEncoding, self).__init__()
         self._in_channels = in_channels
         self._max_length = max_length
@@ -67,8 +67,8 @@ class FieldEncoder(nn.Module):
         self,
         hidden_channels: int = 128,
         pos_enc_max_length: int = 1024,
-        pos_enc_requires_grad: bool = False,
-        period_enc_log: bool = True,
+        pos_enc_requires_grad: bool = True,
+        period_enc_log: bool = False,
     ):
         super(FieldEncoder, self).__init__()
 
@@ -111,7 +111,7 @@ class DepthEncoder(nn.Module):
         self._positional_encoding = AbsolutePositionalEncoding(
             out_channels,
             max_length=pos_enc_max_length,
-            requires_grad=pos_enc_requires_grad,
+            requires_grad=pos_enc_requires_grad
         )
 
         self._depth_projection = FeedForwardEncoder(1, out_channels, hidden_channels)
@@ -120,6 +120,7 @@ class DepthEncoder(nn.Module):
 
         # Accumulative summarize all powers to get depth
         layer_powers = torch.cumsum(layer_powers, dim=1).unsqueeze(-1)
+        layer_powers = torch.log(layer_powers)
 
         # Encode depth
         layer_powers = self._depth_projection(layer_powers)
