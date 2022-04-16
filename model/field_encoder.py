@@ -29,14 +29,12 @@ class AbsolutePositionalEncoding(nn.Module):
         self.register_parameter("_alpha", self._alpha)
 
     def initialize_sinusoid_encoding_table(self) -> torch.Tensor:
-        positional_encoding = torch.empty((self._max_length, self._in_channels))
-        for pos_index in range(self._max_length):
-            for i in range(0, self._in_channels, 2):
-                sin_input = pos_index / 1.0e4 ** ((2 * i) / self._in_channels)
-                cos_input = pos_index / 1.0e4 ** ((2 * i + 1) / self._in_channels)
-                positional_encoding[pos_index, i] = math.sin(sin_input)
-                positional_encoding[pos_index, i + 1] = math.cos(cos_input)
-        return positional_encoding
+        position = torch.arange(self._max_length).unsqueeze(1)
+        div_term = torch.exp(torch.arange(0, self._in_channels, 2) * (-math.log(10000.0) / self._in_channels))
+        encoding = torch.zeros(self._max_length, self._in_channels)
+        encoding[:, 0::2] = torch.sin(position * div_term)
+        encoding[:, 1::2] = torch.cos(position * div_term)
+        return encoding
 
     def initialize_random_encoding_table(self) -> torch.Tensor:
         positional_encoding = torch.empty((self._max_length, self._in_channels))

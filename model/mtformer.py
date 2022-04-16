@@ -2,6 +2,7 @@ import typing as tp
 
 import torch
 import torch.nn as nn
+from torchtyping import TensorType
 
 from model.field_encoder import DepthEncoder, FieldEncoder
 from model.transform import FieldsTransform, ResistivityTransform
@@ -42,8 +43,8 @@ class MTFormer(nn.Module):
         hidden_channels: int,
         num_decoder_blocks: int,
         num_attention_heads: int = 8,
-        positional_encoding_requires_grad: bool = True,
-        max_positional_length: int = 1024,
+        positional_encoding_requires_grad: bool = False,
+        max_positional_length: int = 128,
         quantization: tp.Optional[int] = None,
     ):
         super(MTFormer, self).__init__()
@@ -76,6 +77,7 @@ class MTFormer(nn.Module):
                 d_model=hidden_channels,
                 nhead=num_attention_heads,
                 batch_first=True,
+                norm_first=True
             ),
             num_layers=num_decoder_blocks,
         )
@@ -116,9 +118,7 @@ class MTFormer(nn.Module):
         )
 
         # 3. Reshape Fields & Resistivity to 1-d format
-        target_field = target_field.view(
-            target_field.shape[0], -1, target_field.shape[-1]
-        )
+        target_field = target_field.view(target_field.shape[0], -1, target_field.shape[-1])
         resistivity_grid = resistivity_grid.view(
             resistivity_grid.shape[0], -1, resistivity_grid.shape[-1]
         )
