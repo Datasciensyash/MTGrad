@@ -1,0 +1,4 @@
+torch==1.10.1
+pytorch-lightning==1.5.7
+pymt==0.0.7
+matplotlib==3.5.1
