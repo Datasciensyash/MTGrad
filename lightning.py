@@ -37,7 +37,7 @@ class TrainingEngine(pl.LightningModule):
         )
         resistivity = self.model.normalize_resistivity(batch.resistivity)
         loss = functional.mse_loss(resistivity, resistivity_predicted)
-        self.log("train/loss", loss.cpu().item())
+        self.log("train/loss", loss.cpu().item(), batch_size=resistivity_predicted.shape[0])
         self.lr_schedulers().step()
         return loss
 
@@ -50,7 +50,7 @@ class TrainingEngine(pl.LightningModule):
         )
         resistivity = self.model.normalize_resistivity(batch.resistivity)
         loss = functional.mse_loss(resistivity, resistivity_predicted)
-        self.log("valid/loss", loss.cpu().item())
+        self.log("valid/loss", loss.cpu().item(), batch_size=resistivity_predicted.shape[0])
         return self.model.denormalize_resistivity(resistivity_predicted), resistivity
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
