@@ -77,7 +77,7 @@ class MTFormer(nn.Module):
                 d_model=hidden_channels,
                 nhead=num_attention_heads,
                 batch_first=True,
-                norm_first=True
+                norm_first=True,
             ),
             num_layers=num_decoder_blocks,
         )
@@ -118,7 +118,9 @@ class MTFormer(nn.Module):
         )
 
         # 3. Reshape Fields & Resistivity to 1-d format
-        target_field = target_field.view(target_field.shape[0], -1, target_field.shape[-1])
+        target_field = target_field.view(
+            target_field.shape[0], -1, target_field.shape[-1]
+        )
         resistivity_grid = resistivity_grid.view(
             resistivity_grid.shape[0], -1, resistivity_grid.shape[-1]
         )

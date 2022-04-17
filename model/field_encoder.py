@@ -30,7 +30,10 @@ class AbsolutePositionalEncoding(nn.Module):
 
     def initialize_sinusoid_encoding_table(self) -> torch.Tensor:
         position = torch.arange(self._max_length).unsqueeze(1)
-        div_term = torch.exp(torch.arange(0, self._in_channels, 2) * (-math.log(10000.0) / self._in_channels))
+        div_term = torch.exp(
+            torch.arange(0, self._in_channels, 2)
+            * (-math.log(10000.0) / self._in_channels)
+        )
         encoding = torch.zeros(self._max_length, self._in_channels)
         encoding[:, 0::2] = torch.sin(position * div_term)
         encoding[:, 1::2] = torch.cos(position * div_term)
