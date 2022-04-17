@@ -1,17 +1,18 @@
-experiment_name: Version1
+experiment_name: Baseline-MTGrad
 experiments_path: ./experiments/
 
 optimizer_name: Adam
-optimizer_params: {}
+optimizer_params:
+  weight_decay: 0.005
 
 scheduler_name: StepLR
 scheduler_params:
-  step_size: 100
-  gamma: 0.95
+  step_size: 500
+  gamma: 0.96
 
 model_params:
-  hidden_channels: 64
-  num_decoder_blocks: 4
+  hidden_channels: 256
+  num_decoder_blocks: 6
   num_attention_heads: 4
 
 train_dataset_params:
@@ -19,24 +20,23 @@ train_dataset_params:
   layer_power_min: [15, 15, 15, 15]
   layer_resistivity_min: [ 0, 0, 0, 0 ]
   layer_resistivity_max: [ 20000, 20000, 20000, 20000 ]
-  size: 12
-  pixel_size: 60
+  size: 32
+  pixel_size: 30
   period_range: [0.001, 100]
-  period_count_range: [4, 6]
+  period_count_range: [4, 15]
   batch_size: 16
-  epoch_size: 100
+  epoch_size: 1000
   random_grid: [60, 1024]
-
 
 valid_dataset_params:
   layer_power_max: [150, 150, 150, 150]
   layer_power_min: [15, 15, 15, 15]
   layer_resistivity_min: [ 0, 0, 0, 0 ]
   layer_resistivity_max: [ 20000, 20000, 20000, 20000 ]
-  size: 12
-  pixel_size: 60
+  size: 32
+  pixel_size: 30
   period_range: [0.001, 100]
-  period_count_range: [10, 12]
+  period_count_range: [4, 15]
   batch_size: 16
   epoch_size: 10
   random_grid: [60, 1024]

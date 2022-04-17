@@ -22,6 +22,7 @@ class RandomLayerDataset(Dataset):
         size: int,
         pixel_size: int,
         layer_exist_probability: tp.Optional[tp.List[float]] = None,
+        random_grid: tp.Optional[tp.Tuple[int, int]] = None,
         batch_size: int = 64,
         epoch_size: int = 1,
     ):
@@ -32,6 +33,7 @@ class RandomLayerDataset(Dataset):
             layer_resistivity_min,
             layer_exist_probability,
         )
+        self._random_grid = random_grid
         self._size = size
         self._pixel_size = pixel_size
         self._period_range = period_range
@@ -49,7 +51,9 @@ class RandomLayerDataset(Dataset):
         )
 
     def __getitem__(self, index: int) -> ResistivityMicrogrid:
-        random_mgrid = self._layer_model.to_microgrid(self._size, self._pixel_size)
+        random_mgrid = self._layer_model.to_microgrid(
+            self._size, self._pixel_size, random_layer_powers=self._random_grid
+        )
         return random_mgrid
 
     def __len__(self):
@@ -61,8 +65,6 @@ class RandomLayerDataset(Dataset):
     ) -> MTDataSample:
         periods = self.sample_periods()
 
-        print(data[0].resistivity.shape)
-
         app_res = torch.empty(
             (self._batch_size, len(periods), self._size), dtype=torch.float32
         )
@@ -73,13 +75,14 @@ class RandomLayerDataset(Dataset):
             (self._batch_size, data[0].resistivity.shape[1], self._size),
             dtype=torch.float32,
         )
-        layer_powers = torch.ones_like(resistivity) * self._pixel_size
+        layer_powers = torch.ones_like(resistivity)
 
         for i, mgrid in enumerate(data):
             mgrid.compute_direct_task(periods)
             resistivity[i, :] = torch.Tensor(mgrid.resistivity).T
             app_res[i, :] = torch.Tensor(mgrid.apparent_resistivity).T
             imp_phs[i, :] = torch.Tensor(mgrid.impedance_phase).T
+            layer_powers[i, :] = torch.Tensor(mgrid.layer_power).T
 
         periods = torch.ones((self._batch_size, len(periods))) * torch.Tensor(periods)
 
