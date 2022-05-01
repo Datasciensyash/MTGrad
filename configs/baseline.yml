@@ -16,30 +16,26 @@ model_params:
   num_attention_heads: 4
 
 train_dataset_params:
-  layer_power_max: [150, 150, 150, 150]
-  layer_power_min: [15, 15, 15, 15]
-  layer_resistivity_min: [ 0, 0, 0, 0 ]
-  layer_resistivity_max: [ 20000, 20000, 20000, 20000 ]
-  size: 32
-  pixel_size: 30
-  period_range: [0.001, 100]
-  period_count_range: [4, 15]
-  batch_size: 16
-  epoch_size: 1000
-  random_grid: [60, 1024]
-
-valid_dataset_params:
-  layer_power_max: [150, 150, 150, 150]
-  layer_power_min: [15, 15, 15, 15]
-  layer_resistivity_min: [ 0, 0, 0, 0 ]
-  layer_resistivity_max: [ 20000, 20000, 20000, 20000 ]
-  size: 32
-  pixel_size: 30
+  size: [16, 12]
+  num_layers_range: [2, 6]
+  powers_range: [60, 90]
+  resistivity_range: [1, 20000]
+  alpha_range: [0.1, 0.045]
   period_range: [0.001, 100]
   period_count_range: [4, 15]
   batch_size: 16
   epoch_size: 10
-  random_grid: [60, 1024]
+
+valid_dataset_params:
+  size: [16, 12]
+  num_layers_range: [2, 6]
+  powers_range: [60, 90]
+  resistivity_range: [1, 20000]
+  alpha_range: [0.1, 0.045]
+  period_range: [0.001, 100]
+  period_count_range: [4, 15]
+  batch_size: 16
+  epoch_size: 10
 
 dataloader_params:
   train_batch_size: 16

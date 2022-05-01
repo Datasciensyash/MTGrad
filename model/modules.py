@@ -13,8 +13,8 @@ class FeedForwardEncoder(torch.nn.Module):
         super().__init__()
 
         self._bn = nn.BatchNorm1d(hidden_channels)
-        self._in_proj = nn.Linear(in_channels, hidden_channels)
-        self._out_proj = nn.Linear(hidden_channels, out_channels)
+        self._in_proj = nn.Linear(in_channels, hidden_channels, bias=False)
+        self._out_proj = nn.Linear(hidden_channels, out_channels, bias=False)
         self._dropout = nn.Dropout(dropout_ratio)
         self._activation = nn.LeakyReLU(0.2)
 

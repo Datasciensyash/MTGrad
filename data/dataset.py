@@ -13,32 +13,26 @@ from data_types import MTDataSample
 class RandomLayerDataset(Dataset):
     def __init__(
         self,
-        layer_power_max: tp.List[float],
-        layer_power_min: tp.List[float],
-        layer_resistivity_max: tp.List[float],
-        layer_resistivity_min: tp.List[float],
+        size: tp.Tuple[int, int],
+        num_layers_range: tp.Tuple[int, int],
+        powers_range: tp.Tuple[float, float],
+        resistivity_range: tp.Tuple[float, float],
+        alpha_range: tp.Tuple[float, float],
         period_range: tp.Tuple[float, float],
         period_count_range: tp.Tuple[int, int],
-        size: int,
-        pixel_size: int,
-        layer_exist_probability: tp.Optional[tp.List[float]] = None,
-        random_grid: tp.Optional[tp.Tuple[int, int]] = None,
         batch_size: int = 64,
         epoch_size: int = 1,
     ):
         self._layer_model = RandomLayerModel(
-            layer_power_max,
-            layer_power_min,
-            layer_resistivity_max,
-            layer_resistivity_min,
-            layer_exist_probability,
+            alpha_range=tuple(alpha_range),
+            resistivity_range=tuple(resistivity_range),
+            powers_range=tuple(powers_range),
+            num_layers_range=tuple(num_layers_range),
         )
-        self._random_grid = random_grid
-        self._size = size
-        self._pixel_size = pixel_size
         self._period_range = period_range
         self._period_count_range = period_count_range
 
+        self._size = size
         self._batch_size = batch_size
         self._epoch_size = epoch_size
 
@@ -51,9 +45,7 @@ class RandomLayerDataset(Dataset):
         )
 
     def __getitem__(self, index: int) -> ResistivityMicrogrid:
-        random_mgrid = self._layer_model.to_microgrid(
-            self._size, self._pixel_size, random_layer_powers=self._random_grid
-        )
+        random_mgrid = self._layer_model.to_microgrid(self._size)
         return random_mgrid
 
     def __len__(self):
@@ -66,13 +58,13 @@ class RandomLayerDataset(Dataset):
         periods = self.sample_periods()
 
         app_res = torch.empty(
-            (self._batch_size, len(periods), self._size), dtype=torch.float32
+            (self._batch_size, len(periods), self._size[0]), dtype=torch.float32
         )
         imp_phs = torch.empty(
-            (self._batch_size, len(periods), self._size), dtype=torch.float32
+            (self._batch_size, len(periods), self._size[0]), dtype=torch.float32
         )
         resistivity = torch.empty(
-            (self._batch_size, data[0].resistivity.shape[1], self._size),
+            (self._batch_size, data[0].resistivity.shape[1], self._size[0]),
             dtype=torch.float32,
         )
         layer_powers = torch.ones_like(resistivity)

@@ -14,7 +14,7 @@ class ResistivityTransform:
 class FieldsTransform:
     @staticmethod
     def normalize_app_res(resistivity: torch.Tensor) -> torch.Tensor:
-        return resistivity / 10000
+        return resistivity / 20000
 
     @staticmethod
     def normalize_imp_phs(impedance_phase: torch.Tensor) -> torch.Tensor:
