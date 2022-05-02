@@ -2,7 +2,6 @@ import typing as tp
 
 import torch
 import torch.nn as nn
-from torchtyping import TensorType
 
 from model.field_encoder import DepthEncoder, FieldEncoder
 from model.transform import FieldsTransform, ResistivityTransform
