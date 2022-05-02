@@ -126,12 +126,13 @@ class DepthEncoder(nn.Module):
             requires_grad=pos_enc_requires_grad,
         )
 
-        self._depth_projection = FeedForwardEncoder(1, out_channels, hidden_channels)
+        self._depth_projection = FeedForwardEncoder(2, out_channels, hidden_channels)
 
     def forward(self, layer_powers: torch.Tensor) -> torch.Tensor:
 
         # Accumulative summarize all powers to get depth
-        layer_powers = torch.cumsum(layer_powers, dim=1).unsqueeze(-1)
+        layer_depths = torch.cumsum(layer_powers, dim=1)
+        layer_powers = torch.stack([layer_depths, layer_powers], dim=-1)
         layer_powers = torch.log(layer_powers)
 
         # Encode depth
