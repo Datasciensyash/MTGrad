@@ -3,7 +3,7 @@ experiments_path: ./experiments/
 
 optimizer_name: Adam
 optimizer_params:
-  weight_decay: 0.005
+  weight_decay: 0.000
 
 scheduler_name: StepLR
 scheduler_params:
@@ -16,26 +16,26 @@ model_params:
   num_attention_heads: 4
 
 train_dataset_params:
-  size: [16, 12]
+  size: [12, 12]
   num_layers_range: [2, 6]
-  powers_range: [60, 90]
+  powers_range: [200, 300]
   resistivity_range: [1, 20000]
   alpha_range: [0.1, 0.045]
   period_range: [0.001, 100]
   period_count_range: [4, 15]
   batch_size: 16
-  epoch_size: 10
+  epoch_size: 1000
 
 valid_dataset_params:
-  size: [16, 12]
+  size: [12, 12]
   num_layers_range: [2, 6]
-  powers_range: [60, 90]
+  powers_range: [200, 300]
   resistivity_range: [1, 20000]
   alpha_range: [0.1, 0.045]
   period_range: [0.001, 100]
   period_count_range: [4, 15]
   batch_size: 16
-  epoch_size: 10
+  epoch_size: 1
 
 dataloader_params:
   train_batch_size: 16

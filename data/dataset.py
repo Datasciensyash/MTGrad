@@ -37,12 +37,7 @@ class RandomLayerDataset(Dataset):
         self._epoch_size = epoch_size
 
     def sample_periods(self) -> np.ndarray:
-        return np.clip(
-            np.random.exponential(
-                0.6, size=(random.randint(*self._period_count_range),)
-            ),
-            *self._period_range
-        )
+        return np.array([0.001 * 2 ** i for i in range(8)])
 
     def __getitem__(self, index: int) -> ResistivityMicrogrid:
         random_mgrid = self._layer_model.to_microgrid(self._size)

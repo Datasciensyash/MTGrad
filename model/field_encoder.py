@@ -10,7 +10,11 @@ from model.modules import FeedForwardEncoder
 
 class AbsolutePositionalEncoding(nn.Module):
     def __init__(
-        self, in_channels: int, max_length: int = 128, requires_grad: bool = True
+        self,
+        in_channels: int,
+        max_length: int = 128,
+        requires_grad: bool = True,
+        alpha_start: float = 1.0
     ):
         super(AbsolutePositionalEncoding, self).__init__()
         self._in_channels = in_channels
@@ -24,7 +28,7 @@ class AbsolutePositionalEncoding(nn.Module):
         self._positional_encoding = nn.Parameter(
             positional_encoding, requires_grad=requires_grad
         )
-        self._alpha = nn.Parameter(torch.Tensor([1.0]), requires_grad=True)
+        self._alpha = nn.Parameter(torch.Tensor([alpha_start]), requires_grad=True)
 
         self.register_parameter("_positional_encoding", self._positional_encoding)
         self.register_parameter("_alpha", self._alpha)
@@ -79,7 +83,7 @@ class FieldEncoder(nn.Module):
         self,
         hidden_channels: int = 128,
         pos_enc_max_length: int = 1024,
-        pos_enc_requires_grad: bool = True,
+        pos_enc_requires_grad: bool = False,
         period_enc_log: bool = False,
     ):
         super(FieldEncoder, self).__init__()
@@ -88,6 +92,7 @@ class FieldEncoder(nn.Module):
             hidden_channels,
             max_length=pos_enc_max_length,
             requires_grad=pos_enc_requires_grad,
+            alpha_start=1
         )
         self._period_encoding_log = period_enc_log
 
@@ -99,10 +104,10 @@ class FieldEncoder(nn.Module):
         field = field.squeeze(1) if field.ndim == 4 else field
         periods = periods.unsqueeze(2).repeat(1, 1, field.shape[-1])
         periods = torch.log(periods) if self._period_encoding_log else periods
-        field = torch.stack([field, periods], dim=3)
+        field = torch.stack([field, periods], dim=3)  # (B, Periods, T, 2)
 
         # Encode field
-        field = self._field_projection(field)
+        field = self._field_projection(field)  # (B, Periods, T, 2)
 
         # Add positional encoding
         field = self._positional_encoding(field)
@@ -124,22 +129,25 @@ class DepthEncoder(nn.Module):
             out_channels,
             max_length=pos_enc_max_length,
             requires_grad=pos_enc_requires_grad,
+            alpha_start=1
         )
 
         self._depth_projection = FeedForwardEncoder(2, out_channels, hidden_channels)
 
     def forward(self, layer_powers: torch.Tensor) -> torch.Tensor:
 
+        # layer_powers: (B, Depth, T)
+
         # Accumulative summarize all powers to get depth
         layer_depths = torch.cumsum(layer_powers, dim=1)
-        layer_powers = torch.stack([layer_depths, layer_powers], dim=-1)
+        layer_powers = torch.stack([layer_depths, layer_powers], dim=-1)  # -> (B, Depth, T, 2)
         layer_powers = torch.log(layer_powers)
 
         # Encode depth
-        layer_powers = self._depth_projection(layer_powers)
+        layer_powers = self._depth_projection(layer_powers)  # -> (B, Depth, T, C)
 
         # Add positional encoding
-        layer_powers = self._positional_encoding(layer_powers)
+        layer_powers = self._positional_encoding(layer_powers)  # -> (B, Depth, T, C)
 
         return layer_powers
 

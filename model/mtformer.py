@@ -25,15 +25,21 @@ class MTFieldEncoder(nn.Module):
             hidden_channels, pos_enc_max_length, pos_enc_requires_grad, period_enc_log
         )
 
+        self._field_type_embedding = nn.Embedding(2, hidden_channels)
+
     def forward(
         self,
         apparent_resistivity: torch.Tensor,
         impedance_phase: torch.Tensor,
         periods: torch.Tensor,
     ) -> torch.Tensor:
-        apparent_resistivity = self._app_res_encoder(apparent_resistivity, periods)
-        impedance_phase = self._imp_phs_encoder(impedance_phase, periods)
-        return apparent_resistivity + impedance_phase
+        apparent_resistivity = self._app_res_encoder(
+            apparent_resistivity, periods
+        ) + self._field_type_embedding(torch.tensor([0]).to(periods.device))
+        impedance_phase = self._imp_phs_encoder(
+            impedance_phase, periods
+        ) + self._field_type_embedding(torch.tensor([1]).to(periods.device))
+        return torch.cat([apparent_resistivity, impedance_phase], dim=1)
 
 
 class MTFormer(nn.Module):
@@ -78,7 +84,7 @@ class MTFormer(nn.Module):
                 batch_first=True,
                 norm_first=True,
             ),
-            num_layers=num_decoder_blocks,
+            num_layers=1,
         )
 
         self._out_projection = nn.Sequential(
@@ -114,7 +120,7 @@ class MTFormer(nn.Module):
         # 2. Encode input fields
         target_field = self._target_field_encoder(
             apparent_resistivity, impedance_phase, periods
-        )
+        ).contiguous()
 
         # 3. Reshape Fields & Resistivity to 1-d format
         target_field = target_field.view(
