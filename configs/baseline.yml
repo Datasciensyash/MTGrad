@@ -22,9 +22,9 @@ train_dataset_params:
   resistivity_range: [1, 20000]
   alpha_range: [0.1, 0.045]
   period_range: [0.001, 100]
-  period_count_range: [4, 15]
+  period_count_range: [12, 15]
   batch_size: 16
-  epoch_size: 10
+  epoch_size: 1000
 
 valid_dataset_params:
   size: [16, 12]
@@ -33,9 +33,9 @@ valid_dataset_params:
   resistivity_range: [1, 20000]
   alpha_range: [0.1, 0.045]
   period_range: [0.001, 100]
-  period_count_range: [4, 15]
+  period_count_range: [12, 15]
   batch_size: 16
-  epoch_size: 10
+  epoch_size: 1
 
 dataloader_params:
   train_batch_size: 16
@@ -43,7 +43,7 @@ dataloader_params:
   num_workers: 0
 
 model_checkpoint_params:
-  monitor: valid/loss
+  monitor: train/loss
   filename: checkpoint-epoch{epoch:02d}-valid_loss{valid/loss:.2f}
   auto_insert_metric_name: False
   save_last: True

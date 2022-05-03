@@ -30,9 +30,10 @@ class MTFieldEncoder(nn.Module):
         apparent_resistivity: torch.Tensor,
         impedance_phase: torch.Tensor,
         periods: torch.Tensor,
+        time: torch.Tensor
     ) -> torch.Tensor:
-        apparent_resistivity = self._app_res_encoder(apparent_resistivity, periods)
-        impedance_phase = self._imp_phs_encoder(impedance_phase, periods)
+        apparent_resistivity = self._app_res_encoder(apparent_resistivity, periods, time)
+        impedance_phase = self._imp_phs_encoder(impedance_phase, periods, time)
         return apparent_resistivity + impedance_phase
 
 
@@ -95,14 +96,16 @@ class MTFormer(nn.Module):
 
     def forward(
         self,
+        resistivity: torch.Tensor,
+        time: torch.Tensor,
         apparent_resistivity: torch.Tensor,
         impedance_phase: torch.Tensor,
         periods: torch.Tensor,
-        layer_powers: torch.Tensor,
+        layer_powers: torch.Tensor
     ) -> torch.Tensor:
 
         # 1. Acquire resistivity depth grid
-        resistivity_grid = self._depth_encoder(layer_powers)
+        resistivity_grid = self._depth_encoder(layer_powers, resistivity, time)
         resistivity_grid_shape = resistivity_grid.shape[:-1]
 
         # 2. Transform fields
@@ -113,7 +116,7 @@ class MTFormer(nn.Module):
 
         # 2. Encode input fields
         target_field = self._target_field_encoder(
-            apparent_resistivity, impedance_phase, periods
+            apparent_resistivity, impedance_phase, periods, time
         )
 
         # 3. Reshape Fields & Resistivity to 1-d format

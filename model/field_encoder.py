@@ -1,7 +1,6 @@
 import math
 import random
 
-import numpy as np
 import torch
 import torch.nn as nn
 
@@ -93,7 +92,14 @@ class FieldEncoder(nn.Module):
 
         self._field_projection = FeedForwardEncoder(2, hidden_channels)
 
-    def forward(self, field: torch.Tensor, periods: torch.Tensor) -> torch.Tensor:
+        self._time_encoding = nn.Embedding(100, hidden_channels)
+
+    def forward(
+            self,
+            field: torch.Tensor,
+            periods: torch.Tensor,
+            time: torch.Tensor
+    ) -> torch.Tensor:
 
         # Add periods data to field
         field = field.squeeze(1) if field.ndim == 4 else field
@@ -106,6 +112,10 @@ class FieldEncoder(nn.Module):
 
         # Add positional encoding
         field = self._positional_encoding(field)
+
+        # Add time encoding
+        time_embedding = self._time_encoding(time)
+        field = torch.einsum("b h w c, b c -> b h w c", field, time_embedding)
 
         return field
 
@@ -126,20 +136,32 @@ class DepthEncoder(nn.Module):
             requires_grad=pos_enc_requires_grad,
         )
 
-        self._depth_projection = FeedForwardEncoder(2, out_channels, hidden_channels)
+        self._depth_projection = FeedForwardEncoder(3, out_channels, hidden_channels)
 
-    def forward(self, layer_powers: torch.Tensor) -> torch.Tensor:
+        self._time_encoding = nn.Embedding(100, out_channels)
+
+    def forward(
+            self,
+            layer_powers: torch.Tensor,
+            resistivity: torch.Tensor,
+            time: torch.Tensor,
+    ) -> torch.Tensor:
 
         # Accumulative summarize all powers to get depth
         layer_depths = torch.cumsum(layer_powers, dim=1)
         layer_powers = torch.stack([layer_depths, layer_powers], dim=-1)
-        layer_powers = torch.log(layer_powers)
+        layer_powers = torch.log(layer_powers) / 4
+        layer_powers = torch.cat([layer_powers, resistivity.unsqueeze(-1)], dim=-1)
 
         # Encode depth
         layer_powers = self._depth_projection(layer_powers)
 
         # Add positional encoding
         layer_powers = self._positional_encoding(layer_powers)
+
+        # Add time encoding
+        time_embedding = self._time_encoding(time)
+        layer_powers = torch.einsum("b h w c, b c -> b h w c", layer_powers, time_embedding)
 
         return layer_powers
 

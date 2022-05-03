@@ -10,7 +10,7 @@ from data_types import MTDataSample
 
 class VisualizationCallback(pl.Callback):
     def __init__(
-        self, figsize: tp.Tuple[float, float] = (8, 5), epoch_period: int = 10
+        self, figsize: tp.Tuple[float, float] = (8, 5), epoch_period: int = 1
     ):
         self._figsize = figsize
         self._epoch_period = epoch_period
@@ -41,7 +41,7 @@ class VisualizationCallback(pl.Callback):
         dataloader_idx: int,
     ) -> None:
 
-        if batch_idx != 0:
+        if batch_idx != 0 or trainer.current_epoch == 0:
             return None
 
         if trainer.current_epoch % self._epoch_period != 0:
