@@ -12,7 +12,7 @@ scheduler_params:
 
 model_params:
   hidden_channels: 256
-  num_decoder_blocks: 6
+  num_decoder_blocks: 2
   num_attention_heads: 4
 
 train_dataset_params:
@@ -21,7 +21,6 @@ train_dataset_params:
   powers_range: [200, 300]
   resistivity_range: [1, 20000]
   alpha_range: [0.1, 0.045]
-  period_range: [0.001, 100]
   period_count_range: [4, 15]
   batch_size: 16
   epoch_size: 1000
@@ -32,7 +31,6 @@ valid_dataset_params:
   powers_range: [200, 300]
   resistivity_range: [1, 20000]
   alpha_range: [0.1, 0.045]
-  period_range: [0.001, 100]
   period_count_range: [4, 15]
   batch_size: 16
   epoch_size: 1

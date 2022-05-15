@@ -18,7 +18,6 @@ class RandomLayerDataset(Dataset):
         powers_range: tp.Tuple[float, float],
         resistivity_range: tp.Tuple[float, float],
         alpha_range: tp.Tuple[float, float],
-        period_range: tp.Tuple[float, float],
         period_count_range: tp.Tuple[int, int],
         batch_size: int = 64,
         epoch_size: int = 1,
@@ -29,7 +28,6 @@ class RandomLayerDataset(Dataset):
             powers_range=tuple(powers_range),
             num_layers_range=tuple(num_layers_range),
         )
-        self._period_range = period_range
         self._period_count_range = period_count_range
 
         self._size = size
@@ -37,7 +35,10 @@ class RandomLayerDataset(Dataset):
         self._epoch_size = epoch_size
 
     def sample_periods(self) -> np.ndarray:
-        return np.array([0.001 * 2 ** i for i in range(8)])
+        start = random.uniform(0.001, 0.002)
+        exp_step = random.uniform(1.5, 2.5)
+        count = random.randint(*self._period_count_range)
+        return np.array([start * exp_step ** i for i in range(count)])
 
     def __getitem__(self, index: int) -> ResistivityMicrogrid:
         random_mgrid = self._layer_model.to_microgrid(self._size)

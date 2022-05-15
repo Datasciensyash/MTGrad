@@ -15,7 +15,6 @@ def direct_task(
     rho_t = torch.empty((batch_size, period_num, layer_resistivity.shape[-1]))
     phi_t = torch.empty((batch_size, period_num, layer_resistivity.shape[-1]))
 
-    print(periods.shape, layer_resistivity.shape, layer_power.shape)
     for i in range(batch_size):
         r, p = getattr(direct_tasks, f"direct_task_{ndim - 1}d")(
             periods[i], layer_resistivity[i].T, layer_power[i].T

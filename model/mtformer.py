@@ -25,8 +25,6 @@ class MTFieldEncoder(nn.Module):
             hidden_channels, pos_enc_max_length, pos_enc_requires_grad, period_enc_log
         )
 
-        self._field_type_embedding = nn.Embedding(2, hidden_channels)
-
     def forward(
         self,
         apparent_resistivity: torch.Tensor,
@@ -35,10 +33,10 @@ class MTFieldEncoder(nn.Module):
     ) -> torch.Tensor:
         apparent_resistivity = self._app_res_encoder(
             apparent_resistivity, periods
-        ) + self._field_type_embedding(torch.tensor([0]).to(periods.device))
+        )
         impedance_phase = self._imp_phs_encoder(
             impedance_phase, periods
-        ) + self._field_type_embedding(torch.tensor([1]).to(periods.device))
+        )
         return torch.cat([apparent_resistivity, impedance_phase], dim=1)
 
 
@@ -84,7 +82,7 @@ class MTFormer(nn.Module):
                 batch_first=True,
                 norm_first=True,
             ),
-            num_layers=1,
+            num_layers=num_decoder_blocks,
         )
 
         self._out_projection = nn.Sequential(
