@@ -17,14 +17,14 @@ from lightning import TrainingEngine
 from model.mtformer import MTFormer
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     arguments_parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     arguments_parser.add_argument(
         "-c", "--config", help="path to yaml config", type=str, required=True
     )
-    args, unknown = arguments_parser.parse_known_args()
+    args = arguments_parser.parse_args()
     return args
 
 
