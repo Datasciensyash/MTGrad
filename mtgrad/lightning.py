@@ -1,14 +1,10 @@
-import typing as tp
-
 import pytorch_lightning as pl
 import torch.nn as nn
 import torch.optim
-from pytorch_lightning.utilities.types import (EVAL_DATALOADERS,
-                                               TRAIN_DATALOADERS)
+from data_types import MTDataSample
 from torch.nn import functional
 
-from data_types import MTDataSample
-from model.mtformer import MTFormer
+from mtgrad.model import MTFormer
 
 
 class TrainingEngine(pl.LightningModule):
@@ -64,18 +60,6 @@ class TrainingEngine(pl.LightningModule):
             self.model.denormalize_resistivity(resistivity_predicted),
             resistivity,
         )
-
-    def train_dataloader(self) -> TRAIN_DATALOADERS:
-        pass
-
-    def test_dataloader(self) -> EVAL_DATALOADERS:
-        pass
-
-    def val_dataloader(self) -> EVAL_DATALOADERS:
-        pass
-
-    def predict_dataloader(self) -> EVAL_DATALOADERS:
-        pass
 
     def configure_optimizers(self):
         return [self.optimizer], [self.scheduler]

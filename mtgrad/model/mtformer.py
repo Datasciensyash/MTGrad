@@ -3,8 +3,8 @@ import typing as tp
 import torch
 import torch.nn as nn
 
-from model.field_encoder import DepthEncoder, FieldEncoder
-from model.transform import FieldsTransform, ResistivityTransform
+from mtgrad.model.field_encoder import DepthEncoder, FieldEncoder
+from mtgrad.model.transform import FieldsTransform, ResistivityTransform
 
 
 class MTFieldEncoder(nn.Module):

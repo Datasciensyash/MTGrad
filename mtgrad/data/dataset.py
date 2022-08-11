@@ -7,7 +7,7 @@ from pymt.microgrid import ResistivityMicrogrid
 from pymt.modeling import RandomLayerModel
 from torch.utils.data import Dataset
 
-from data_types import MTDataSample
+from mtgrad.data_types import MTDataSample
 
 
 class RandomLayerDataset(Dataset):

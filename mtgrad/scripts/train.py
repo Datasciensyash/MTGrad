@@ -11,10 +11,10 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 from pytorch_lightning.loggers import TensorBoardLogger
 from torch.utils.data import DataLoader
 
-from callbacks import VisualizationCallback
-from data.dataset import RandomLayerDataset
-from lightning import TrainingEngine
-from model.mtformer import MTFormer
+from mtgrad.callbacks import VisualizationCallback
+from mtgrad.data import RandomLayerDataset
+from mtgrad.lightning import TrainingEngine
+from mtgrad.model import MTFormer
 
 
 def parse_args() -> argparse.Namespace:

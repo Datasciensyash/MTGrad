@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from data_types import MTModel
+from mtgrad.data_types import MTModel
 
 
 class MTCriterion(nn.Module):

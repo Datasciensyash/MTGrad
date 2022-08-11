@@ -1,11 +1,10 @@
 import math
 import random
 
-import numpy as np
 import torch
 import torch.nn as nn
 
-from model.modules import FeedForwardEncoder
+from mtgrad.model.modules import FeedForwardEncoder
 
 
 class AbsolutePositionalEncoding(nn.Module):

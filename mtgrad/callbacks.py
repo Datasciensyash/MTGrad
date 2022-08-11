@@ -6,7 +6,7 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 
-from data_types import MTDataSample
+from mtgrad.data_types import MTDataSample
 from mtgrad.functional import direct_task
 
 matplotlib.use("Agg")
