@@ -14,7 +14,7 @@ class AbsolutePositionalEncoding(nn.Module):
         in_channels: int,
         max_length: int = 128,
         requires_grad: bool = True,
-        alpha_start: float = 1.0
+        alpha_start: float = 1.0,
     ):
         super(AbsolutePositionalEncoding, self).__init__()
         self._in_channels = in_channels
@@ -28,9 +28,13 @@ class AbsolutePositionalEncoding(nn.Module):
         self._positional_encoding = nn.Parameter(
             positional_encoding, requires_grad=requires_grad
         )
-        self._alpha = nn.Parameter(torch.Tensor([alpha_start]), requires_grad=True)
+        self._alpha = nn.Parameter(
+            torch.Tensor([alpha_start]), requires_grad=True
+        )
 
-        self.register_parameter("_positional_encoding", self._positional_encoding)
+        self.register_parameter(
+            "_positional_encoding", self._positional_encoding
+        )
         self.register_parameter("_alpha", self._alpha)
 
     def initialize_sinusoid_encoding_table(self) -> torch.Tensor:
@@ -58,16 +62,21 @@ class AbsolutePositionalEncoding(nn.Module):
             if not random_slice
             else random.randint(0, self._max_length - tensor_length)
         )
-        encoding = self._positional_encoding[start_index : start_index + tensor_length]
+        encoding = self._positional_encoding[
+            start_index : start_index + tensor_length
+        ]
         # (B, H, W, C) + (W, C) -> (B, H, W, C)
         return self._alpha * encoding + input_tensor
 
 
 class PeriodEncoder(nn.Module):
+    # Deprecated
     def __init__(self, out_channels: int, log: bool = False):
         super(PeriodEncoder, self).__init__()
         self._log = log
-        self._encoder = nn.Sequential(nn.Linear(1, out_channels), nn.LeakyReLU(0.2))
+        self._encoder = nn.Sequential(
+            nn.Linear(1, out_channels), nn.LeakyReLU(0.2)
+        )
         self._alpha = nn.Parameter(torch.Tensor([1.0]), requires_grad=True)
 
         self.register_parameter("_alpha", self._alpha)
@@ -92,13 +101,15 @@ class FieldEncoder(nn.Module):
             hidden_channels,
             max_length=pos_enc_max_length,
             requires_grad=pos_enc_requires_grad,
-            alpha_start=1
+            alpha_start=1,
         )
         self._period_encoding_log = period_enc_log
 
         self._field_projection = FeedForwardEncoder(2, hidden_channels)
 
-    def forward(self, field: torch.Tensor, periods: torch.Tensor) -> torch.Tensor:
+    def forward(
+        self, field: torch.Tensor, periods: torch.Tensor
+    ) -> torch.Tensor:
 
         # Add periods data to field
         field = field.squeeze(1) if field.ndim == 4 else field
@@ -129,10 +140,12 @@ class DepthEncoder(nn.Module):
             out_channels,
             max_length=pos_enc_max_length,
             requires_grad=pos_enc_requires_grad,
-            alpha_start=1
+            alpha_start=1,
         )
 
-        self._depth_projection = FeedForwardEncoder(2, out_channels, hidden_channels)
+        self._depth_projection = FeedForwardEncoder(
+            2, out_channels, hidden_channels
+        )
 
     def forward(self, layer_powers: torch.Tensor) -> torch.Tensor:
 
@@ -140,14 +153,20 @@ class DepthEncoder(nn.Module):
 
         # Accumulative summarize all powers to get depth
         layer_depths = torch.cumsum(layer_powers, dim=1)
-        layer_powers = torch.stack([layer_depths, layer_powers], dim=-1)  # -> (B, Depth, T, 2)
+        layer_powers = torch.stack(
+            [layer_depths, layer_powers], dim=-1
+        )  # -> (B, Depth, T, 2)
         layer_powers = torch.log(layer_powers)
 
         # Encode depth
-        layer_powers = self._depth_projection(layer_powers)  # -> (B, Depth, T, C)
+        layer_powers = self._depth_projection(
+            layer_powers
+        )  # -> (B, Depth, T, C)
 
         # Add positional encoding
-        layer_powers = self._positional_encoding(layer_powers)  # -> (B, Depth, T, C)
+        layer_powers = self._positional_encoding(
+            layer_powers
+        )  # -> (B, Depth, T, C)
 
         return layer_powers
 

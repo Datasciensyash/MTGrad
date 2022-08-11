@@ -4,7 +4,9 @@ import torch
 
 @torch.no_grad()
 def direct_task(
-    periods: torch.Tensor, layer_resistivity: torch.Tensor, layer_power: torch.Tensor
+    periods: torch.Tensor,
+    layer_resistivity: torch.Tensor,
+    layer_power: torch.Tensor,
 ):
     batch_size, period_num = periods.shape
     device, ndim = periods.device, layer_resistivity.ndim

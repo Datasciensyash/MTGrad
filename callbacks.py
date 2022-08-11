@@ -1,5 +1,6 @@
 import typing as tp
 
+import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pytorch_lightning as pl
@@ -8,19 +9,19 @@ import torch
 from data_types import MTDataSample
 from mtgrad.functional import direct_task
 
-import matplotlib
-matplotlib.use('Agg')
+matplotlib.use("Agg")
+
 
 class VisualizationCallback(pl.Callback):
     def __init__(
-        self,
-        figsize: tp.Tuple[float, float] = (8, 5),
-        epoch_period: int = 1
+        self, figsize: tp.Tuple[float, float] = (8, 5), epoch_period: int = 1
     ):
         self._figsize = figsize
         self._epoch_period = epoch_period
 
-    def _visualize_tensor(self, tensor: torch.Tensor, cbar: bool = True) -> np.ndarray:
+    def _visualize_tensor(
+        self, tensor: torch.Tensor, cbar: bool = True
+    ) -> np.ndarray:
 
         if tensor.ndim != 2:
             raise ValueError(
@@ -52,10 +53,16 @@ class VisualizationCallback(pl.Callback):
         if trainer.current_epoch % self._epoch_period != 0:
             return None
 
-        rho, phi = direct_task(batch.periods, batch.resistivity, batch.layer_powers)
-        rho_pred, phi_pred = direct_task(batch.periods, outputs[0], batch.layer_powers)
+        rho, phi = direct_task(
+            batch.periods, batch.resistivity, batch.layer_powers
+        )
+        rho_pred, phi_pred = direct_task(
+            batch.periods, outputs[0], batch.layer_powers
+        )
         for i in range(batch.resistivity.shape[0]):
-            resistivity = self._visualize_tensor(batch.resistivity[i], cbar=True)
+            resistivity = self._visualize_tensor(
+                batch.resistivity[i], cbar=True
+            )
             resistivity_pred = self._visualize_tensor(outputs[0][i], cbar=True)
             rho_vis = self._visualize_tensor(rho[i], cbar=True)
             phi_vis = self._visualize_tensor(phi[i], cbar=True)
@@ -99,5 +106,3 @@ class VisualizationCallback(pl.Callback):
                 pl_module.current_epoch,
                 dataformats="HWC",
             )
-
-

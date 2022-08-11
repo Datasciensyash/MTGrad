@@ -3,7 +3,8 @@ import typing as tp
 import pytorch_lightning as pl
 import torch.nn as nn
 import torch.optim
-from pytorch_lightning.utilities.types import EVAL_DATALOADERS, TRAIN_DATALOADERS
+from pytorch_lightning.utilities.types import (EVAL_DATALOADERS,
+                                               TRAIN_DATALOADERS)
 from torch.nn import functional
 
 from data_types import MTDataSample
@@ -37,7 +38,11 @@ class TrainingEngine(pl.LightningModule):
         )
         resistivity = self.model.normalize_resistivity(batch.resistivity)
         loss = functional.mse_loss(resistivity, resistivity_predicted)
-        self.log("train/loss", loss.cpu().item(), batch_size=resistivity_predicted.shape[0])
+        self.log(
+            "train/loss",
+            loss.cpu().item(),
+            batch_size=resistivity_predicted.shape[0],
+        )
         self.lr_schedulers().step()
         return loss
 
@@ -50,8 +55,15 @@ class TrainingEngine(pl.LightningModule):
         )
         resistivity = self.model.normalize_resistivity(batch.resistivity)
         loss = functional.mse_loss(resistivity, resistivity_predicted)
-        self.log("valid/loss", loss.cpu().item(), batch_size=resistivity_predicted.shape[0])
-        return self.model.denormalize_resistivity(resistivity_predicted), resistivity
+        self.log(
+            "valid/loss",
+            loss.cpu().item(),
+            batch_size=resistivity_predicted.shape[0],
+        )
+        return (
+            self.model.denormalize_resistivity(resistivity_predicted),
+            resistivity,
+        )
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         pass

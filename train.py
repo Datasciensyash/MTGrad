@@ -31,7 +31,9 @@ def parse_args():
 def prepare_experiment(exp_path: Path, exp_name: str):
     exp_path.mkdir(exist_ok=True)
     experiment_path = (
-        exp_path / exp_name / str(time.ctime()).replace(" ", "_").replace(":", "_")
+        exp_path
+        / exp_name
+        / str(time.ctime()).replace(" ", "_").replace(":", "_")
     )
     logs_dir = experiment_path / "logs"
     checkpoint_dir = experiment_path / "_checkpoints"
@@ -93,7 +95,9 @@ def train(config: dict):
     checkpoint_callback = ModelCheckpoint(
         dirpath=checkpoint_dir, **config["model_checkpoint_params"]
     )
-    logger = TensorBoardLogger(name=config["experiment_name"], save_dir=str(logs_dir))
+    logger = TensorBoardLogger(
+        name=config["experiment_name"], save_dir=str(logs_dir)
+    )
 
     # Initialize lightning module
     module = TrainingEngine(

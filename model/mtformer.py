@@ -18,11 +18,17 @@ class MTFieldEncoder(nn.Module):
         super(MTFieldEncoder, self).__init__()
 
         self._app_res_encoder = FieldEncoder(
-            hidden_channels, pos_enc_max_length, pos_enc_requires_grad, period_enc_log
+            hidden_channels,
+            pos_enc_max_length,
+            pos_enc_requires_grad,
+            period_enc_log,
         )
 
         self._imp_phs_encoder = FieldEncoder(
-            hidden_channels, pos_enc_max_length, pos_enc_requires_grad, period_enc_log
+            hidden_channels,
+            pos_enc_max_length,
+            pos_enc_requires_grad,
+            period_enc_log,
         )
 
     def forward(
@@ -34,9 +40,7 @@ class MTFieldEncoder(nn.Module):
         apparent_resistivity = self._app_res_encoder(
             apparent_resistivity, periods
         )
-        impedance_phase = self._imp_phs_encoder(
-            impedance_phase, periods
-        )
+        impedance_phase = self._imp_phs_encoder(impedance_phase, periods)
         return torch.cat([apparent_resistivity, impedance_phase], dim=1)
 
 
@@ -94,7 +98,9 @@ class MTFormer(nn.Module):
     def normalize_resistivity(self, resistivity: torch.Tensor) -> torch.Tensor:
         return self._rt.normalize(resistivity)
 
-    def denormalize_resistivity(self, resistivity: torch.Tensor) -> torch.Tensor:
+    def denormalize_resistivity(
+        self, resistivity: torch.Tensor
+    ) -> torch.Tensor:
         return self._rt.denormalize(resistivity)
 
     def forward(
@@ -113,7 +119,9 @@ class MTFormer(nn.Module):
         apparent_resistivity = self._ft.normalize_app_res(
             apparent_resistivity
         ).unsqueeze(1)
-        impedance_phase = self._ft.normalize_imp_phs(impedance_phase).unsqueeze(1)
+        impedance_phase = self._ft.normalize_imp_phs(impedance_phase).unsqueeze(
+            1
+        )
 
         # 2. Encode input fields
         target_field = self._target_field_encoder(

@@ -72,7 +72,9 @@ class RandomLayerDataset(Dataset):
             imp_phs[i, :] = torch.Tensor(mgrid.impedance_phase).T
             layer_powers[i, :] = torch.Tensor(mgrid.layer_power).T
 
-        periods = torch.ones((self._batch_size, len(periods))) * torch.Tensor(periods)
+        periods = torch.ones((self._batch_size, len(periods))) * torch.Tensor(
+            periods
+        )
 
         return MTDataSample(
             resistivity=resistivity,
